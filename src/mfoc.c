@@ -340,6 +340,8 @@ int main(int argc, char *const argv[])
     // Iterate over every block, where we haven't found a key yet
     for (block = 0; block <= t.num_blocks; ++block) {
       if (trailer_block(block)) {
+      	bool rightKeyA=false;
+      	bool rightKeyB=false;
         if (!t.sectors[i].foundKeyA) {
           mc = MC_AUTH_A;
           int res;
@@ -353,6 +355,7 @@ int main(int argc, char *const argv[])
             // Save all information about successfull keyA authentization
             memcpy(t.sectors[i].KeyA, mp.mpa.abtKey, sizeof(mp.mpa.abtKey));
             t.sectors[i].foundKeyA = true;
+            rightKeyA=true;
             // Although KeyA can never be directly read from the data sector, KeyB can, so
             // if we need KeyB for this sector, it should be revealed by a data read with KeyA
             // todo - check for duplicates in cracked key list (do we care? will not be huge overhead)
@@ -371,6 +374,7 @@ int main(int argc, char *const argv[])
                   //fprintf(stdout, "OK\n");
                   memcpy(t.sectors[i].KeyB, mtmp.mpd.abtData + 10, sizeof(t.sectors[i].KeyB));
                   t.sectors[i].foundKeyB = true;
+                  rightKeyB=true;
                   bk->size++;
                   bk->brokenKeys = (uint64_t *) realloc((void *)bk->brokenKeys, bk->size * sizeof(uint64_t));
                   bk->brokenKeys[bk->size - 1] = bytes_to_num(mtmp.mpa.abtKey, sizeof(mtmp.mpa.abtKey));
@@ -402,11 +406,11 @@ int main(int argc, char *const argv[])
             t.sectors[i].foundKeyB = true;
           }
         }
-        if ((t.sectors[i].foundKeyA) && (t.sectors[i].foundKeyB)) {
+        if ( rightKeyA && rightKeyB) {
           fprintf(stdout, "x");
-        } else if (t.sectors[i].foundKeyA) {
+        } else if ( rightKeyA ) {
           fprintf(stdout, "/");
-        } else if (t.sectors[i].foundKeyB) {
+        } else if ( rightKeyB) {
           fprintf(stdout, "\\");
         } else {
           fprintf(stdout, ".");
